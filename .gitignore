@@ -135,3 +135,7 @@ dist
 
 # Config files
 config/local*.json
+
+# Telegram session files
+*.session
+*.session-journal
