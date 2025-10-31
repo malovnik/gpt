@@ -1,11 +1,14 @@
 {
   "debug": 1, // debug level: 0 - no debug, 1 - debug, 2 - verbose debug
-  "bot": {
-    "token": "TELEGRAM_BOT_TOKEN"
+  "telegram": {
+    "apiId": 0, // Get from https://my.telegram.org
+    "apiHash": "YOUR_API_HASH", // Get from https://my.telegram.org
+    "phoneNumber": "+1234567890", // Your phone number with country code
+    "sessionName": "telegram_monitor" // Session file name
   },
   "monitor": {
-    "groupId": 0, // Group ID to monitor (required, e.g., -1001234567890)
-    "targetUserId": 0, // Your user ID to receive summaries (required)
+    "groupId": 0, // Group ID or username to monitor (e.g., -1001234567890 or "groupname")
+    "targetUserId": "me", // "me" for yourself or specific user ID
     "summaryIntervalHours": 4, // Send summary every N hours (default: 4)
     "checkLinksEnabled": true // Enable link validation (default: true)
   },

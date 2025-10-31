@@ -1,12 +1,13 @@
-import type TelegramBot from 'node-telegram-bot-api';
-
-export interface BotOptions {
-  token: string;
+export interface TelegramOptions {
+  apiId: number;
+  apiHash: string;
+  phoneNumber: string;
+  sessionName: string;
 }
 
 export interface MonitorOptions {
-  groupId: number;
-  targetUserId: number;
+  groupId: number | string;
+  targetUserId: number | string;
   summaryIntervalHours: number;
   checkLinksEnabled: boolean;
 }
@@ -20,7 +21,7 @@ export interface OpenAIOptions {
 
 export interface Config {
   debug: number;
-  bot: BotOptions;
+  telegram: TelegramOptions;
   monitor: MonitorOptions;
   openai: OpenAIOptions;
   proxy?: string;
@@ -28,7 +29,12 @@ export interface Config {
 
 export interface CollectedMessage {
   id: number;
-  from: TelegramBot.User | undefined;
+  from: {
+    id?: number;
+    firstName?: string;
+    lastName?: string;
+    username?: string;
+  };
   text: string;
   date: Date;
   replyTo?: number;

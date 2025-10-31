@@ -14,12 +14,15 @@ function loadConfig(): Config {
 
   const cfg: Config = {
     debug: tryGet<number>('debug') || 1,
-    bot: {
-      token: config.get<string>('bot.token'),
+    telegram: {
+      apiId: config.get<number>('telegram.apiId'),
+      apiHash: config.get<string>('telegram.apiHash'),
+      phoneNumber: config.get<string>('telegram.phoneNumber'),
+      sessionName: tryGet<string>('telegram.sessionName') || 'telegram_monitor',
     },
     monitor: {
-      groupId: config.get<number>('monitor.groupId'),
-      targetUserId: config.get<number>('monitor.targetUserId'),
+      groupId: config.get<number | string>('monitor.groupId'),
+      targetUserId: tryGet<number | string>('monitor.targetUserId') || 'me',
       summaryIntervalHours:
         tryGet<number>('monitor.summaryIntervalHours') || 4,
       checkLinksEnabled:
