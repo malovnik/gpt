@@ -1,59 +1,63 @@
-import type {openai, FetchFn} from 'chatgpt';
+import type TelegramBot from 'node-telegram-bot-api';
 
 export interface BotOptions {
   token: string;
-  userIds: number[];
-  groupIds: number[];
-  chatCmd: string;
 }
 
-export interface APIBrowserOptions {
-  email: string;
-  password: string;
-  isGoogleLogin?: boolean;
-  isProAccount?: boolean;
-  executablePath?: string;
-  proxyServer?: string;
-  nopechaKey?: string;
-  captchaToken?: string;
-  userDataDir?: string;
-  timeoutMs?: number;
-  debug?: boolean;
+export interface MonitorOptions {
+  groupId: number;
+  targetUserId: number;
+  summaryIntervalHours: number;
+  checkLinksEnabled: boolean;
 }
 
-export interface APIOfficialOptions {
+export interface OpenAIOptions {
   apiKey: string;
-  apiBaseUrl?: string;
-  completionParams?: Partial<
-    Omit<openai.CreateChatCompletionRequest, 'messages' | 'n'>
-  >;
-  systemMessage?: string;
-  maxModelTokens?: number;
-  maxResponseTokens?: number;
-  timeoutMs?: number;
-  fetch?: FetchFn;
-  debug?: boolean;
-}
-
-export interface APIUnofficialOptions {
-  accessToken: string;
-  apiReverseProxyUrl?: string;
-  model?: string;
-  timeoutMs?: number;
-  fetch?: FetchFn;
-  debug?: boolean;
-}
-
-export interface APIOptions {
-  type: 'browser' | 'official' | 'unofficial';
-  browser?: APIBrowserOptions;
-  official?: APIOfficialOptions;
-  unofficial?: APIUnofficialOptions;
+  model: string;
+  maxTokens: number;
+  temperature: number;
 }
 
 export interface Config {
   debug: number;
   bot: BotOptions;
-  api: APIOptions;
+  monitor: MonitorOptions;
+  openai: OpenAIOptions;
   proxy?: string;
+}
+
+export interface CollectedMessage {
+  id: number;
+  from: TelegramBot.User | undefined;
+  text: string;
+  date: Date;
+  replyTo?: number;
+  hasLinks: boolean;
+  links: string[];
+}
+
+export interface MessageSummary {
+  totalMessages: number;
+  period: {
+    start: Date;
+    end: Date;
+  };
+  keyDiscussions: string[];
+  interestingMessages: InterestingMessage[];
+  verifiedLinks: VerifiedLink[];
+}
+
+export interface InterestingMessage {
+  messageId: number;
+  from: string;
+  text: string;
+  category: 'question' | 'request' | 'offer' | 'important';
+  reason: string;
+}
+
+export interface VerifiedLink {
+  url: string;
+  title: string;
+  isAccessible: boolean;
+  description?: string;
 }
