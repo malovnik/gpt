@@ -1,10 +1,8 @@
-import type {ChatMessage as ChatResponseV4} from 'chatgpt';
-import type {ChatResponse as ChatResponseV3} from 'chatgpt-v3';
 import _ from 'lodash';
 import type TelegramBot from 'node-telegram-bot-api';
 import telegramifyMarkdown from 'telegramify-markdown';
 import type {ChatGPT} from '../api';
-import {BotOptions} from '../types';
+import {BotOptions, GeminiResponse} from '../types';
 import {logWithTime} from '../utils';
 import Queue from 'promise-queue';
 
@@ -44,9 +42,9 @@ class ChatHandler {
       reply_to_message_id: msg.message_id,
     });
 
-    // add to sequence queue due to chatGPT processes only one request at a time
+    // add to sequence queue due to Gemini processes only one request at a time
     const requestPromise = this._apiRequestsQueue.add(() => {
-      return this._sendToGpt(text, chatId, reply);
+      return this._sendToGemini(text, chatId, reply);
     });
     if (this._n_pending == 0) this._n_pending++;
     else this._n_queued++;
@@ -63,7 +61,7 @@ class ChatHandler {
     await requestPromise;
   };
 
-  protected _sendToGpt = async (
+  protected _sendToGemini = async (
     text: string,
     chatId: number,
     originalReply: TelegramBot.Message
@@ -71,32 +69,25 @@ class ChatHandler {
     let reply = originalReply;
     await this._bot.sendChatAction(chatId, 'typing');
 
-    // Send message to ChatGPT
+    // Send message to Gemini
     try {
       const res = await this._api.sendMessage(
         text,
         _.throttle(
-          async (partialResponse: ChatResponseV3 | ChatResponseV4) => {
-            const resText =
-              this._api.apiType == 'browser'
-                ? (partialResponse as ChatResponseV3).response
-                : (partialResponse as ChatResponseV4).text;
-            reply = await this._editMessage(reply, resText);
+          async (partialResponse: GeminiResponse) => {
+            reply = await this._editMessage(reply, partialResponse.text);
             await this._bot.sendChatAction(chatId, 'typing');
           },
           3000,
           {leading: true, trailing: false}
         )
       );
-      const resText =
-        this._api.apiType == 'browser'
-          ? (res as ChatResponseV3).response
-          : (res as ChatResponseV4).text;
-      await this._editMessage(reply, resText);
-
-      if (this.debug >= 1) logWithTime(`📨 Response:\n${resText}`);
+      if (res) {
+        await this._editMessage(reply, res.text);
+        if (this.debug >= 1) logWithTime(`📨 Response:\n${res.text}`);
+      }
     } catch (err) {
-      logWithTime('⛔️ ChatGPT API error:', (err as Error).message);
+      logWithTime('⛔️ Gemini API error:', (err as Error).message);
       this._bot.sendMessage(
         chatId,
         "⚠️ Sorry, I'm having trouble connecting to the server, please try again later."

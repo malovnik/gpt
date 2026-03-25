@@ -6,8 +6,8 @@ import {loadConfig} from './utils';
 async function main() {
   const opts = loadConfig();
 
-  // Initialize ChatGPT API.
-  const api = new ChatGPT(opts.api);
+  // Initialize Gemini API.
+  const api = new ChatGPT(opts.api, opts.debug);
   await api.init();
 
   // Initialize Telegram Bot and message handler.
