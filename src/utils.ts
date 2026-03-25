@@ -1,14 +1,5 @@
-import type {FetchFn, openai} from 'chatgpt';
 import config from 'config';
-import pkg from 'https-proxy-agent';
-import fetch, {type RequestInfo, type RequestInit} from 'node-fetch';
-import {
-  Config,
-  APIBrowserOptions,
-  APIOfficialOptions,
-  APIUnofficialOptions,
-} from './types';
-const {HttpsProxyAgent} = pkg;
+import {Config, GeminiAPIOptions} from './types';
 
 function loadConfig(): Config {
   function tryGet<T>(key: string): T | undefined {
@@ -19,70 +10,14 @@ function loadConfig(): Config {
     }
   }
 
-  let fetchFn: FetchFn | undefined = undefined;
-  const proxy = tryGet<string>('proxy') || process.env.http_proxy;
-  if (proxy) {
-    const proxyAgent = new HttpsProxyAgent(proxy);
-    fetchFn = ((url, opts) =>
-      fetch(
-        url as RequestInfo,
-        {...opts, agent: proxyAgent} as RequestInit
-      )) as FetchFn;
-  }
+  const apiCfg: GeminiAPIOptions = {
+    apiKey: config.get<string>('api.apiKey'),
+    model: tryGet<string>('api.model') || 'gemini-3.1-flash-light-preview',
+    systemMessage: tryGet<string>('api.systemMessage') || undefined,
+    timeoutMs: tryGet<number>('api.timeoutMs') || undefined,
+  };
 
-  const apiType = config.get<'browser' | 'official' | 'unofficial'>('api.type');
-  let apiBrowserCfg: APIBrowserOptions | undefined;
-  let apiOfficialCfg: APIOfficialOptions | undefined;
-  let apiUnofficialCfg: APIUnofficialOptions | undefined;
-  if (apiType == 'browser') {
-    apiBrowserCfg = {
-      email: config.get<string>('api.browser.email'),
-      password: config.get<string>('api.browser.password'),
-      isGoogleLogin: tryGet<boolean>('api.browser.isGoogleLogin') || false,
-      isProAccount: tryGet<boolean>('api.browser.isProAccount') || false,
-      executablePath:
-        tryGet<string>('api.browser.executablePath') ||
-        process.env.PUPPETEER_EXECUTABLE_PATH ||
-        undefined,
-      proxyServer: tryGet<string>('proxy') || undefined,
-      nopechaKey: tryGet<string>('api.browser.nopechaKey') || undefined,
-      captchaToken: tryGet<string>('api.browser.captchaToken') || undefined,
-      userDataDir: tryGet<string>('api.browser.userDataDir') || undefined,
-      timeoutMs: tryGet<number>('api.browser.timeoutMs') || undefined,
-      debug: config.get<number>('debug') >= 2,
-    };
-  } else if (apiType == 'official') {
-    apiOfficialCfg = {
-      apiKey: config.get<string>('api.official.apiKey'),
-      apiBaseUrl: tryGet<string>('api.official.apiBaseUrl') || undefined,
-      completionParams:
-        tryGet<
-          Partial<Omit<openai.CreateChatCompletionRequest, 'messages' | 'n'>>
-        >('api.official.completionParams') || undefined,
-      systemMessage: tryGet<string>('api.official.systemMessage') || undefined,
-      maxModelTokens:
-        tryGet<number>('api.official.maxModelTokens') || undefined,
-      maxResponseTokens:
-        tryGet<number>('api.official.maxResponseTokens') || undefined,
-      timeoutMs: tryGet<number>('api.official.timeoutMs') || undefined,
-      fetch: fetchFn,
-      debug: config.get<number>('debug') >= 2,
-    };
-  } else if (apiType == 'unofficial') {
-    apiUnofficialCfg = {
-      accessToken: config.get<string>('api.unofficial.accessToken'),
-      apiReverseProxyUrl:
-        tryGet<string>('api.unofficial.apiReverseProxyUrl') || undefined,
-      model: tryGet<string>('api.unofficial.model') || undefined,
-      timeoutMs: tryGet<number>('api.unofficial.timeoutMs') || undefined,
-      fetch: fetchFn,
-      debug: config.get<number>('debug') >= 2,
-    };
-  } else {
-    throw new RangeError('Invalid API type');
-  }
-
-  const cfg = {
+  const cfg: Config = {
     debug: tryGet<number>('debug') || 1,
     bot: {
       token: config.get<string>('bot.token'),
@@ -90,13 +25,8 @@ function loadConfig(): Config {
       groupIds: tryGet<number[]>('bot.groupIds') || [],
       chatCmd: tryGet<string>('bot.chatCmd') || '/chat',
     },
-    api: {
-      type: apiType,
-      browser: apiBrowserCfg,
-      official: apiOfficialCfg,
-      unofficial: apiUnofficialCfg,
-    },
-    proxy: proxy,
+    api: apiCfg,
+    proxy: tryGet<string>('proxy') || undefined,
   };
 
   return cfg;

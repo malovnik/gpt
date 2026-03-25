@@ -48,7 +48,7 @@ class CommandHandler {
             `(When using a command in a group, make sure to include a mention after the command, like /help@${botUsername}).\n` +
             '  • /help Show help information.\n' +
             '  • /reset Reset the current chat thread and start a new one.\n' +
-            '  • /reload (admin required) Refresh the ChatGPT session.'
+            '  • /reload (admin required) Refresh the Gemini session.'
         );
         break;
 
