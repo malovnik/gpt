@@ -10,23 +10,51 @@ function loadConfig(): Config {
     }
   }
 
+  // Environment variables take priority (for Railway / Docker deployments)
   const apiCfg: GeminiAPIOptions = {
-    apiKey: config.get<string>('api.apiKey'),
-    model: tryGet<string>('api.model') || 'gemini-3.1-flash-light-preview',
-    systemMessage: tryGet<string>('api.systemMessage') || undefined,
-    timeoutMs: tryGet<number>('api.timeoutMs') || undefined,
+    apiKey:
+      process.env.GEMINI_API_KEY ||
+      tryGet<string>('api.apiKey') ||
+      '',
+    model:
+      process.env.GEMINI_MODEL ||
+      tryGet<string>('api.model') ||
+      'gemini-3.1-flash-light-preview',
+    systemMessage:
+      process.env.GEMINI_SYSTEM_MESSAGE ||
+      tryGet<string>('api.systemMessage') ||
+      undefined,
+    timeoutMs:
+      (process.env.GEMINI_TIMEOUT_MS
+        ? Number(process.env.GEMINI_TIMEOUT_MS)
+        : undefined) ||
+      tryGet<number>('api.timeoutMs') ||
+      undefined,
   };
 
+  const botToken =
+    process.env.TELEGRAM_BOT_TOKEN ||
+    tryGet<string>('bot.token') ||
+    '';
+
+  const botUserIds = process.env.TELEGRAM_USER_IDS
+    ? process.env.TELEGRAM_USER_IDS.split(',').map(Number)
+    : tryGet<number[]>('bot.userIds') || [];
+
+  const botGroupIds = process.env.TELEGRAM_GROUP_IDS
+    ? process.env.TELEGRAM_GROUP_IDS.split(',').map(Number)
+    : tryGet<number[]>('bot.groupIds') || [];
+
   const cfg: Config = {
-    debug: tryGet<number>('debug') || 1,
+    debug: process.env.DEBUG ? Number(process.env.DEBUG) : tryGet<number>('debug') || 1,
     bot: {
-      token: config.get<string>('bot.token'),
-      userIds: tryGet<number[]>('bot.userIds') || [],
-      groupIds: tryGet<number[]>('bot.groupIds') || [],
-      chatCmd: tryGet<string>('bot.chatCmd') || '/chat',
+      token: botToken,
+      userIds: botUserIds,
+      groupIds: botGroupIds,
+      chatCmd: process.env.CHAT_CMD || tryGet<string>('bot.chatCmd') || '/chat',
     },
     api: apiCfg,
-    proxy: tryGet<string>('proxy') || undefined,
+    proxy: process.env.HTTP_PROXY || tryGet<string>('proxy') || undefined,
   };
 
   return cfg;
